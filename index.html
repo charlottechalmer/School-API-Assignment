@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<script src="http://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+	<link rel="stylesheet" type="text/css" href="index.css">
+</head>
+<body>
+	
+	<h1> <img src="http://www.rentcafe.com/dmslivecafe/UploadedImages/aa379c71-f4a1-4aa8-a1aa-8a889ed8a358.jpg"></h1>
+	<h2>Student Portal</h2>
+	<div id="addClassEntry">
+		<input id="addClass" placeholder="Enter a class to add" />
+		<button id="postAddClass">Add a Class</button>
+		<div id="classes">
+			<ul>
+				<h3>Available Classes</h3>
+				<li>Fat Studies</li> 
+				<li>Psychology of Sexuality</li>
+				<li>Reproductive Justice</li>
+				<li>American Popular Music</li>
+				<li>Jews and Fashion</li>
+				<li>Consumer Culture</li>
+			</ul>
+		</div>
+	</div>
+	<div class="left">
+		<button id="getSchedule">Show Schedule</button>
+		<div id="schedule"></div>
+		<div></div>
+		<button id="showGrades">Show Grades</button>
+		<div id="grades"></div>
+		<div></div>
+		<input id="class" placeholder="Enter class name" />
+		<button id="checkCompletedHomework">Check if completed homework</button>
+		<div id="getCompletedHomework"></div>
+		<div></div>
+		<button id="allHomeworkCompletion">Show all homework completion statuses</button>
+		<div id="showAllHomework"></div>
+		<div></div>
+		<input id="doneHomework" placeholder="Enter class name" />
+		<button id="markHomeworkDone">Mark Homework as completed</button>
+	</div>
+
+
+
+
+	<script>
+		/* jshint esversion:6 */
+
+//SCHEDULE
+function getSchedule() {
+	$.get("/schedule", function(response) {
+		var res = JSON.parse(response);
+		var arr = [];
+		for (var i of res) {
+			var randomTime = Math.floor((Math.random() * (15 - 9) + 9));
+			if (randomTime > 12) {
+				randomTime -= 12;
+				randomTime = randomTime + ":" + "00" + "pm";
+			} else if (randomTime === 12) {
+				randomTime = randomTime + ":" + "00" + "pm";
+			} else {
+				randomTime = randomTime + ":" + "00" + "am";
+			}
+			arr.push(i.name + ": " + (randomTime));
+		}
+		arr = arr.join("<br/>");
+		$("#schedule").html(arr);
+
+	});
+}
+
+$('#getSchedule').click(getSchedule);
+
+//GRADES
+function showGrades() {
+	$.get("/grades", function(response) {
+		var res = JSON.parse(response);
+		var arr = [];
+		for (var i of res) {
+			arr.push(i.name + ": " + i.grade);
+		}
+		arr = arr.join("<br/>");
+		$('#grades').html(arr);
+	});
+}
+
+$('#showGrades').click(showGrades);
+
+//ADD CLASS
+function addToSchedule(class_name) {
+	$.post("/schedule", class_name, function(response) {
+				//do nothing
+			});
+	getSchedule();
+}
+$("#postAddClass").click(function() {
+	addToSchedule($("#addClass").val());
+	$('#addClass').val("");
+});
+
+
+//HOMEWORK
+	//show completion boolean for one class input
+	function getHomeworkCompletion(class_name) {
+		$.get("/homework", function(response) {
+			var res = JSON.parse(response);
+			for (var i of res) { 
+				if (i.name === class_name) {
+					console.log(typeof(i.homework));
+					$("#getCompletedHomework").text(i.homework).css({
+						color: i.homework ? "black" : "red"
+					});
+
+					return;
+				} 		
+			}
+			alert("That class is not available!");
+		});
+	}
+	$("#checkCompletedHomework").click(function() {
+		getHomeworkCompletion($("#class").val());
+		$("#class").val("");
+	});
+	//change completion boolean for	one class input
+	function doneHomework(class_name) {
+		$.post("/homework", class_name, function(response) {
+				//do nothing
+			});
+		isHomeworkDone();
+	}
+	$("#markHomeworkDone").click(function() {
+		doneHomework($("#doneHomework").val());
+		$('#doneHomework').val("");
+	});
+	//check all completion booleans
+	function isHomeworkDone() {
+		$.get("/homework", function(response) {
+			var res = JSON.parse(response);
+			var arr = [];
+			for (var i of res) {
+				if (!i.homework) {
+					arr.push(i.name + ":<font color='red'> " + i.homework + "</font>");
+				} else {
+					arr.push(i.name + ": " + i.homework);
+				}
+			}
+			arr = arr.join("<br/>");
+			$('#showAllHomework').html(arr);
+		});
+	}
+	$('#allHomeworkCompletion').click(isHomeworkDone);
+</script>
+</body>
